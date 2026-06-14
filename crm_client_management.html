@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expert CRM</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#F0F2F5; --surface:#FFFFFF; --surface2:#F8F9FB;
+  --border:#E2E6EA; --border-light:#EEF0F3;
+  --text-primary:#1A1F2E; --text-secondary:#5A6474; --text-muted:#9BA5B4;
+  --accent:#2563EB; --accent-light:#EFF4FF; --accent-hover:#1D4ED8;
+  --green:#059669; --green-bg:#ECFDF5;
+  --orange:#D97706; --orange-bg:#FFFBEB;
+  --red:#DC2626; --red-bg:#FEF2F2;
+  --purple:#7C3AED; --purple-bg:#F5F3FF;
+  --tag-bg:#F1F3F6;
+  --sh-sm:0 1px 3px rgba(0,0,0,0.06); --sh-md:0 4px 12px rgba(0,0,0,0.08); --sh-lg:0 8px 24px rgba(0,0,0,0.10);
+  --r:10px; --rs:6px;
+}
+body { font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic UI',sans-serif; background:var(--bg); color:var(--text-primary); font-size:13px; line-height:1.5; min-height:100vh; }
+.app { display:flex; min-height:100vh; }
+/* SIDEBAR */
+.sidebar { width:220px; background:var(--text-primary); flex-shrink:0; display:flex; flex-direction:column; }
+.sidebar-logo { padding:20px 20px 16px; border-bottom:1px solid rgba(255,255,255,0.08); margin-bottom:8px; }
+.logo-text { font-size:15px; font-weight:700; color:#fff; letter-spacing:-0.3px; }
+.logo-sub { font-size:10px; color:rgba(255,255,255,0.4); margin-top:2px; letter-spacing:0.5px; text-transform:uppercase; }
+.sidebar-nav { padding:0 10px; }
+.nav-sec { font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; padding:12px 10px 6px; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:var(--rs); cursor:pointer; color:rgba(255,255,255,0.55); font-size:13px; transition:all 0.15s; margin-bottom:2px; }
+.nav-item:hover { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.85); }
+.nav-item.active { background:var(--accent); color:#fff; }
+.nav-item svg { width:15px; height:15px; flex-shrink:0; }
+.nav-badge { margin-left:auto; background:rgba(255,255,255,0.15); color:rgba(255,255,255,0.7); font-size:10px; padding:1px 6px; border-radius:10px; }
+.nav-item.active .nav-badge { background:rgba(255,255,255,0.25); color:#fff; }
+/* MAIN */
+.main { flex:1; overflow:hidden; display:flex; flex-direction:column; }
+.topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; height:56px; display:flex; align-items:center; gap:16px; flex-shrink:0; box-shadow:var(--sh-sm); }
+.topbar-title { font-size:16px; font-weight:700; }
+.topbar-sub { font-size:12px; color:var(--text-muted); margin-left:8px; }
+.sp { flex:1; }
+.btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:var(--rs); border:none; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.15s; font-family:inherit; }
+.btn-primary { background:var(--accent); color:#fff; }
+.btn-primary:hover { background:var(--accent-hover); }
+.btn-outline { background:transparent; color:var(--text-secondary); border:1px solid var(--border); }
+.btn-outline:hover { background:var(--surface2); }
+.btn-danger { background:var(--red); color:#fff; }
+.btn svg { width:13px; height:13px; }
+.content { flex:1; overflow-y:auto; padding:20px 24px; }
+/* STATS */
+.stats-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+.stat-card { background:var(--surface); border-radius:var(--r); padding:14px 16px; box-shadow:var(--sh-sm); border:1px solid var(--border-light); }
+.stat-label { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; }
+.stat-value { font-size:22px; font-weight:700; margin-top:3px; }
+.stat-sub { font-size:11px; color:var(--text-muted); margin-top:2px; }
+.stat-card.s1 { border-top:3px solid var(--accent); }
+.stat-card.s2 { border-top:3px solid var(--green); }
+.stat-card.s3 { border-top:3px solid var(--orange); }
+.stat-card.s4 { border-top:3px solid var(--purple); }
+/* FILTER */
+.filter-bar { background:var(--surface); border-radius:var(--r); padding:14px 16px; margin-bottom:16px; box-shadow:var(--sh-sm); border:1px solid var(--border-light); display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.search-box { display:flex; align-items:center; gap:8px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--rs); padding:7px 12px; flex:1; min-width:200px; }
+.search-box input { border:none; background:transparent; outline:none; font-size:13px; color:var(--text-primary); width:100%; font-family:inherit; }
+.search-box input::placeholder { color:var(--text-muted); }
+.search-box svg { width:14px; height:14px; color:var(--text-muted); flex-shrink:0; }
+.fsel { background:var(--surface2); border:1px solid var(--border); border-radius:var(--rs); padding:7px 10px; font-size:12px; color:var(--text-secondary); cursor:pointer; outline:none; font-family:inherit; }
+/* TABLE */
+.table-wrap { background:var(--surface); border-radius:var(--r); box-shadow:var(--sh-sm); border:1px solid var(--border-light); overflow:hidden; }
+.table-hbar { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+.table-count { font-size:12px; color:var(--text-muted); }
+table { width:100%; border-collapse:collapse; }
+thead th { background:var(--surface2); padding:10px 14px; text-align:left; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid var(--border); white-space:nowrap; }
+tbody tr { border-bottom:1px solid var(--border-light); cursor:pointer; transition:background 0.12s; }
+tbody tr:last-child { border-bottom:none; }
+tbody tr:hover { background:var(--accent-light); }
+tbody td { padding:12px 14px; vertical-align:middle; }
+.cl-cell { display:flex; align-items:center; gap:10px; }
+.cl-av { width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; color:#fff; }
+.cl-name { font-size:13px; font-weight:600; }
+.cl-ind { font-size:11px; color:var(--text-muted); margin-top:1px; }
+.mb-cnt { display:inline-flex; align-items:center; gap:4px; background:var(--accent-light); color:var(--accent); padding:3px 8px; border-radius:20px; font-size:12px; font-weight:600; }
+.mb-cnt svg { width:11px; height:11px; }
+.bgt { font-size:12px; font-weight:600; }
+.bgt-s { font-size:11px; color:var(--text-muted); }
+.csz { font-size:12px; }
+.rev { font-size:11px; color:var(--text-muted); margin-top:1px; }
+.lbadge { display:inline-flex; align-items:center; padding:3px 8px; border-radius:20px; font-size:11px; font-weight:600; }
+.lbadge.p { background:var(--green-bg); color:var(--green); }
+.lbadge.s { background:var(--accent-light); color:var(--accent); }
+.lbadge.g { background:var(--orange-bg); color:var(--orange); }
+.lbadge.u { background:var(--tag-bg); color:var(--text-secondary); }
+.addr { font-size:12px; color:var(--text-secondary); line-height:1.4; }
+.addr-b { font-size:11px; color:var(--text-muted); }
+.chev { color:var(--text-muted); text-align:right; }
+/* TOAST */
+.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#1A1F2E; color:#fff; padding:10px 20px; border-radius:8px; font-size:13px; font-weight:500; z-index:9999; opacity:0; transition:opacity 0.3s; pointer-events:none; }
+.toast.show { opacity:1; }
+/* OVERLAY */
+.overlay { display:none; position:fixed; inset:0; z-index:100; background:rgba(15,20,35,0.5); }
+.overlay.open { display:flex; }
+/* DETAIL PANEL */
+.detail-panel { position:absolute; right:0; top:0; bottom:0; width:820px; max-width:100vw; background:var(--bg); box-shadow:var(--sh-lg); display:flex; flex-direction:column; animation:slideIn 0.25s ease; }
+@keyframes slideIn { from{transform:translateX(40px);opacity:0} to{transform:translateX(0);opacity:1} }
+.panel-topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; height:56px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
+.back-btn { display:flex; align-items:center; gap:6px; color:var(--text-muted); font-size:12px; cursor:pointer; background:none; border:none; font-family:inherit; padding:6px 8px; border-radius:var(--rs); transition:all 0.15s; }
+.back-btn:hover { background:var(--surface2); color:var(--text-secondary); }
+.back-btn svg { width:14px; height:14px; }
+.bsep { color:var(--text-muted); }
+.panel-title { font-size:15px; font-weight:700; }
+.panel-body { flex:1; overflow-y:auto; padding:20px 24px; }
+/* CLIENT OVERVIEW */
+.cl-overview { background:var(--surface); border-radius:var(--r); border:1px solid var(--border-light); box-shadow:var(--sh-sm); margin-bottom:16px; overflow:hidden; }
+.ov-head { padding:16px 20px; display:flex; align-items:flex-start; gap:14px; border-bottom:1px solid var(--border); }
+.ov-av { width:48px; height:48px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; color:#fff; flex-shrink:0; }
+.ov-name { font-size:16px; font-weight:700; }
+.ov-meta { font-size:12px; color:var(--text-muted); margin-top:3px; display:flex; gap:12px; flex-wrap:wrap; }
+.ov-body { padding:16px 20px; display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.ov-field label { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px; }
+.ov-field .v { font-size:13px; font-weight:500; }
+.ov-field .sv { font-size:11px; color:var(--text-muted); }
+.ov-sec { padding:8px 20px; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; background:var(--surface2); border-top:1px solid var(--border); border-bottom:1px solid var(--border); font-weight:600; }
+.ov-notes { padding:14px 20px; font-size:13px; color:var(--text-secondary); line-height:1.6; }
+/* SECTION */
+.sec-hd { display:flex; align-items:center; gap:10px; margin-bottom:12px; margin-top:4px; }
+.sec-title { font-size:14px; font-weight:700; }
+.sec-cnt { background:var(--accent-light); color:var(--accent); font-size:11px; font-weight:700; padding:2px 7px; border-radius:10px; }
+/* MEMBER CARDS */
+.mc-list { display:flex; flex-direction:column; gap:10px; }
+.mc { background:var(--surface); border-radius:var(--r); border:1px solid var(--border-light); box-shadow:var(--sh-sm); overflow:hidden; }
+.mc-head { padding:14px 16px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--border-light); }
+.mc-av { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#fff; flex-shrink:0; }
+.mc-info { flex:1; }
+.mc-name { font-size:14px; font-weight:700; }
+.mc-role { font-size:12px; color:var(--text-secondary); margin-top:2px; }
+.mc-dept { font-size:11px; background:var(--tag-bg); color:var(--text-secondary); padding:2px 7px; border-radius:4px; display:inline-block; margin-top:3px; }
+.mc-body { padding:12px 16px; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.mc-f label { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:3px; }
+.mc-f .v { font-size:12px; }
+.cm { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:20px; font-size:11px; font-weight:500; }
+.cm.e { background:var(--accent-light); color:var(--accent); }
+.cm.p { background:var(--green-bg); color:var(--green); }
+.cm.l { background:var(--purple-bg); color:var(--purple); }
+.cm svg { width:10px; height:10px; }
+.ptags { display:flex; flex-wrap:wrap; gap:5px; }
+.ptag { background:var(--tag-bg); color:var(--text-secondary); padding:3px 8px; border-radius:4px; font-size:11px; }
+.crit { font-size:12px; color:var(--text-secondary); line-height:1.5; }
+.li-a { color:var(--purple); text-decoration:none; font-weight:500; }
+.mc-actions { display:flex; gap:8px; padding:10px 16px; background:var(--surface2); border-top:1px solid var(--border-light); justify-content:flex-end; }
+/* MODAL */
+.modal-overlay { display:none; position:fixed; inset:0; z-index:200; background:rgba(15,20,35,0.6); align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal { background:var(--surface); border-radius:var(--r); width:600px; max-width:95vw; max-height:90vh; overflow-y:auto; box-shadow:var(--sh-lg); animation:fadeUp 0.2s ease; }
+@keyframes fadeUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+.modal-head { padding:20px 24px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.modal-title { font-size:16px; font-weight:700; }
+.modal-close { background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:20px; line-height:1; padding:4px; border-radius:4px; }
+.modal-close:hover { background:var(--surface2); color:var(--text-primary); }
+.modal-body { padding:20px 24px; }
+.modal-foot { padding:16px 24px; border-top:1px solid var(--border); display:flex; gap:8px; justify-content:flex-end; }
+/* FORM */
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.form-grid.full { grid-template-columns:1fr; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-group.span2 { grid-column:1/-1; }
+.form-group label { font-size:11px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.4px; }
+.form-group input, .form-group select, .form-group textarea {
+  background:var(--surface2); border:1.5px solid var(--border); border-radius:var(--rs);
+  padding:8px 10px; font-size:13px; color:var(--text-primary); outline:none; font-family:inherit; transition:border-color 0.15s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--accent); background:var(--surface); }
+.form-group textarea { resize:vertical; min-height:72px; }
+.form-section { font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; padding:14px 0 8px; border-bottom:1px solid var(--border-light); margin-bottom:8px; grid-column:1/-1; }
+/* LOADING */
+.loading { display:flex; align-items:center; justify-content:center; padding:60px; color:var(--text-muted); font-size:14px; gap:10px; }
+.spinner { width:20px; height:20px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+/* CSV */
+.csv-drop { border:2px dashed var(--border); border-radius:var(--r); padding:32px; text-align:center; color:var(--text-muted); cursor:pointer; transition:all 0.15s; }
+.csv-drop:hover { border-color:var(--accent); background:var(--accent-light); }
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-text">Expert CRM</div>
+      <div class="logo-sub">Client Management</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-sec">メイン</div>
+      <div class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        ダッシュボード
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        クライアント <span class="nav-badge" id="sidebarClientCnt">0</span>
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        コンタクト <span class="nav-badge" id="sidebarContactCnt">0</span>
+      </div>
+      <div class="nav-sec">データ</div>
+      <div class="nav-item" onclick="openCsvModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        CSV インポート
+      </div>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">クライアント管理</span>
+      <span class="topbar-sub" id="topbarSub"></span>
+      <div class="sp"></div>
+      <button class="btn btn-outline" onclick="exportCsv()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        CSV エクスポート
+      </button>
+      <button class="btn btn-primary" onclick="openClientModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新規クライアント
+      </button>
+    </div>
+
+    <div class="content">
+      <div class="stats-bar">
+        <div class="stat-card s1"><div class="stat-label">クライアント総数</div><div class="stat-value" id="statClients">—</div><div class="stat-sub">登録企業数</div></div>
+        <div class="stat-card s2"><div class="stat-label">登録コンタクト数</div><div class="stat-value" id="statContacts">—</div><div class="stat-sub" id="statAvg">—</div></div>
+        <div class="stat-card s3"><div class="stat-label">上場クライアント</div><div class="stat-value" id="statListed">—</div><div class="stat-sub" id="statListedPct">—</div></div>
+        <div class="stat-card s4"><div class="stat-label">大企業クライアント</div><div class="stat-value" id="statLarge">—</div><div class="stat-sub" id="statLargePct">—</div></div>
+      </div>
+      <div class="filter-bar">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="searchQ" placeholder="クライアント名・住所・業界で検索..." oninput="applyFilter()">
+        </div>
+        <select class="fsel" id="fListing" onchange="applyFilter()">
+          <option value="">上場区分 すべて</option>
+          <option>東証プライム</option><option>東証スタンダード</option><option>東証グロース</option><option>未上場</option>
+        </select>
+        <select class="fsel" id="fSize" onchange="applyFilter()">
+          <option value="">企業規模 すべて</option>
+          <option value="大企業">大企業（1000名以上）</option>
+          <option value="中堅">中堅（300〜999名）</option>
+          <option value="中小">中小（〜299名）</option>
+        </select>
+        <button class="btn btn-outline" onclick="clearFilter()">リセット</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-hbar"><span class="table-count" id="tableCount"></span></div>
+        <table><thead><tr>
+          <th>クライアント名</th><th>メンバー数</th><th>提案バッファ</th><th>企業規模</th><th>上場区分</th><th>本社所在地</th><th style="width:30px"></th>
+        </tr></thead>
+        <tbody id="tableBody"><tr><td colspan="7"><div class="loading"><div class="spinner"></div>読み込み中...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL OVERLAY -->
+<div class="overlay" id="detailOverlay">
+  <div style="flex:1" onclick="closeDetail()"></div>
+  <div class="detail-panel">
+    <div class="panel-topbar">
+      <button class="back-btn" onclick="closeDetail()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        クライアント一覧
+      </button>
+      <span class="bsep">/</span>
+      <span class="panel-title" id="detailTitle"></span>
+      <div class="sp"></div>
+      <button class="btn btn-outline" id="editClientBtn">編集</button>
+      <button class="btn btn-primary" onclick="openContactModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        コンタクト追加
+      </button>
+    </div>
+    <div class="panel-body" id="detailBody"><div class="loading"><div class="spinner"></div>読み込み中...</div></div>
+  </div>
+</div>
+
+<!-- CLIENT MODAL -->
+<div class="modal-overlay" id="clientModal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title" id="clientModalTitle">新規クライアント登録</span>
+      <button class="modal-close" onclick="closeClientModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-section">基本情報</div>
+        <div class="form-group span2"><label>クライアント名 *</label><input id="f_name" placeholder="株式会社〇〇"></div>
+        <div class="form-group"><label>業界</label><input id="f_industry" placeholder="IT・テクノロジー"></div>
+        <div class="form-group"><label>上場区分</label>
+          <select id="f_listing"><option value="">選択してください</option><option>東証プライム</option><option>東証スタンダード</option><option>東証グロース</option><option>未上場</option></select>
+        </div>
+        <div class="form-group"><label>企業規模</label>
+          <select id="f_size"><option value="">選択してください</option><option>大企業</option><option>中堅</option><option>中小</option></select>
+        </div>
+        <div class="form-group"><label>従業員数</label><input id="f_employees" placeholder="約 3,000 名"></div>
+        <div class="form-group"><label>売上規模</label><input id="f_revenue" placeholder="売上 500 億円"></div>
+        <div class="form-section">提案バッファ</div>
+        <div class="form-group"><label>下限（USD）</label><input id="f_bmin" type="number" placeholder="850"></div>
+        <div class="form-group"><label>上限（USD）</label><input id="f_bmax" type="number" placeholder="1100"></div>
+        <div class="form-section">住所</div>
+        <div class="form-group"><label>郵便番号</label><input id="f_zip" placeholder="100-0001"></div>
+        <div class="form-group"><label>支社情報</label><input id="f_branches" placeholder="大阪・名古屋"></div>
+        <div class="form-group span2"><label>本社住所</label><input id="f_address" placeholder="東京都千代田区〇〇1-1-1"></div>
+        <div class="form-section">概要・特徴</div>
+        <div class="form-group span2"><label>クライアント概要・特徴</label><textarea id="f_overview" rows="4" placeholder="クライアントの特徴、採用傾向、注意点などを記載..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeClientModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveClient()" id="saveClientBtn">登録する</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT MODAL -->
+<div class="modal-overlay" id="contactModal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title" id="contactModalTitle">コンタクト追加</span>
+      <button class="modal-close" onclick="closeContactModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-section">氏名</div>
+        <div class="form-group"><label>姓 *</label><input id="cf_last" placeholder="山田"></div>
+        <div class="form-group"><label>名 *</label><input id="cf_first" placeholder="太郎"></div>
+        <div class="form-group span2"><label>フリガナ</label><input id="cf_kana" placeholder="ヤマダ タロウ"></div>
+        <div class="form-section">役職・部署</div>
+        <div class="form-group"><label>役職</label><input id="cf_title" placeholder="部長"></div>
+        <div class="form-group"><label>部署</label><input id="cf_dept" placeholder="人事本部 採用企画部"></div>
+        <div class="form-section">連絡先</div>
+        <div class="form-group"><label>直通電話</label><input id="cf_tel" placeholder="03-XXXX-XXXX"></div>
+        <div class="form-group"><label>携帯番号</label><input id="cf_mobile" placeholder="090-XXXX-XXXX"></div>
+        <div class="form-group"><label>メールアドレス</label><input id="cf_email" type="email" placeholder="xxx@company.co.jp"></div>
+        <div class="form-group"><label>LinkedIn</label><input id="cf_linkedin" placeholder="linkedin.com/in/xxx"></div>
+        <div class="form-group span2"><label>好む連絡手段</label>
+          <select id="cf_preferred"><option value="">選択してください</option><option value="email">メール</option><option value="phone">電話</option><option value="linkedin">LinkedIn</option></select>
+        </div>
+        <div class="form-section">選定基準・特徴</div>
+        <div class="form-group span2"><label>エキスパート選定基準</label><textarea id="cf_criteria" rows="3" placeholder="重視する経歴・スキル・条件など..."></textarea></div>
+        <div class="form-group span2"><label>性格・雰囲気（カンマ区切り）</label><input id="cf_personality" placeholder="論理的, スピード重視, データドリブン"></div>
+        <div class="form-group span2"><label>その他メモ</label><textarea id="cf_notes" rows="3" placeholder="連絡時の注意点、MTGリズム、好みなど..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeContactModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveContact()" id="saveContactBtn">登録する</button>
+    </div>
+  </div>
+</div>
+
+<!-- CSV MODAL -->
+<div class="modal-overlay" id="csvModal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title">CSV インポート</span>
+      <button class="modal-close" onclick="document.getElementById('csvModal').classList.remove('open')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">以下の形式のCSVファイルをインポートできます。1行目はヘッダー行として扱われます。</p>
+      <div style="background:var(--surface2);border-radius:var(--rs);padding:12px;font-size:11px;color:var(--text-secondary);font-family:monospace;margin-bottom:16px;overflow-x:auto">
+        name,industry,listing,size,employees,revenue,budget_min,budget_max,zip,address,branches,overview
+      </div>
+      <div class="csv-drop" id="csvDrop" onclick="document.getElementById('csvFile').click()">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 8px;display:block"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div style="font-size:13px;font-weight:600">CSVファイルをクリックして選択</div>
+        <div style="font-size:11px;margin-top:4px">UTF-8 / Shift-JIS 対応</div>
+      </div>
+      <input type="file" id="csvFile" accept=".csv" style="display:none" onchange="handleCsvFile(event)">
+      <div id="csvPreview" style="margin-top:16px"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="document.getElementById('csvModal').classList.remove('open')">閉じる</button>
+      <button class="btn btn-primary" id="csvImportBtn" style="display:none" onclick="importCsv()">インポート実行</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL = 'https://pngtrlsbeggswfbgdwoc.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBuZ3RybHNiZWdnc3dmYmdkd29jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwOTYwNjcsImV4cCI6MjA5MjY3MjA2N30.IwyD1KIuW6rZm5tY_sRLKM3mzNRczWUyKABg9RqSsu4';
+
+const COLORS = ['#2563EB','#059669','#7C3AED','#D97706','#DC2626','#0891B2','#4F46E5','#B45309'];
+let allClients = [];
+let allContacts = [];
+let currentClientId = null;
+let editingClientId = null;
+let editingContactId = null;
+let csvRows = [];
+
+// ========== SUPABASE HELPERS ==========
+async function sb(path, opts={}) {
+  const res = await fetch(SB_URL + '/rest/v1/' + path, {
+    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': opts.prefer || 'return=representation', ...opts.headers },
+    method: opts.method || 'GET',
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  if (!res.ok) { const e = await res.text(); throw new Error(e); }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+// ========== LOAD DATA ==========
+async function loadAll() {
+  try {
+    const [clients, contacts] = await Promise.all([
+      sb('crm_clients?select=*&order=created_at.asc'),
+      sb('crm_contacts?select=*&order=created_at.asc')
+    ]);
+    allClients = clients || [];
+    allContacts = contacts || [];
+    updateStats();
+    renderTable(allClients);
+    updateSidebarBadges();
+  } catch(e) { showToast('データ読み込みエラー: ' + e.message, true); renderTable([]); }
+}
+
+function updateStats() {
+  const n = allClients.length;
+  const nc = allContacts.length;
+  const listed = allClients.filter(c => c.listing && c.listing !== '未上場').length;
+  const large = allClients.filter(c => c.size === '大企業').length;
+  document.getElementById('statClients').textContent = n;
+  document.getElementById('statContacts').textContent = nc;
+  document.getElementById('statAvg').textContent = n ? `平均 ${(nc/n).toFixed(1)} 名 / 社` : '—';
+  document.getElementById('statListed').textContent = listed;
+  document.getElementById('statListedPct').textContent = n ? `全体の ${Math.round(listed/n*100)}%` : '—';
+  document.getElementById('statLarge').textContent = large;
+  document.getElementById('statLargePct').textContent = n ? `全体の ${Math.round(large/n*100)}%` : '—';
+  document.getElementById('topbarSub').textContent = `全 ${n} 社`;
+}
+
+function updateSidebarBadges() {
+  document.getElementById('sidebarClientCnt').textContent = allClients.length;
+  document.getElementById('sidebarContactCnt').textContent = allContacts.length;
+}
+
+// ========== TABLE ==========
+function getInitials(name) { return (name||'').replace(/株式会社|グループ|HD|ホールディングス/g,'').trim().slice(0,2); }
+function colorIdx(id) { let h=0; for(let c of id){h=(h*31+c.charCodeAt(0))&0xffff;} return h%COLORS.length; }
+function lClass(l) { if(l==='東証プライム')return'p'; if(l==='東証スタンダード')return's'; if(l==='東証グロース')return'g'; return'u'; }
+
+function renderTable(data) {
+  const tbody = document.getElementById('tableBody');
+  document.getElementById('tableCount').textContent = data.length + ' 社を表示中';
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">データがありません</td></tr>'; return; }
+  tbody.innerHTML = data.map(c => {
+    const mc = allContacts.filter(x => x.client_id === c.id).length;
+    const ci = colorIdx(c.id);
+    return `<tr onclick="openDetail('${c.id}')">
+      <td><div class="cl-cell">
+        <div class="cl-av" style="background:${COLORS[ci]}">${getInitials(c.name)}</div>
+        <div><div class="cl-name">${esc(c.name)}</div><div class="cl-ind">${esc(c.industry||'')}</div></div>
+      </div></td>
+      <td><div class="mb-cnt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>${mc} 名</div></td>
+      <td><div class="bgt">${c.budget_min||0}USD 〜 ${c.budget_max||0}USD</div><div class="bgt-s">提案バッファ</div></td>
+      <td><div class="csz">${esc(c.employees||'—')}</div><div class="rev">${esc(c.revenue||'')}</div></td>
+      <td>${c.listing?`<span class="lbadge ${lClass(c.listing)}">${esc(c.listing)}</span>`:'—'}</td>
+      <td><div class="addr">${c.zip?'〒'+esc(c.zip)+'<br>':''} ${esc(c.address||'—')}</div><div class="addr-b">${c.branches?'支社: '+esc(c.branches):''}</div></td>
+      <td class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></td>
+    </tr>`;
+  }).join('');
+}
+
+function applyFilter() {
+  const q = document.getElementById('searchQ').value.toLowerCase();
+  const fl = document.getElementById('fListing').value;
+  const fs = document.getElementById('fSize').value;
+  const filtered = allClients.filter(c => {
+    const mq = !q || [c.name,c.industry,c.address].some(v => (v||'').toLowerCase().includes(q));
+    const ml = !fl || c.listing === fl;
+    const ms = !fs || c.size === fs;
+    return mq && ml && ms;
+  });
+  renderTable(filtered);
+}
+
+function clearFilter() {
+  document.getElementById('searchQ').value = '';
+  document.getElementById('fListing').value = '';
+  document.getElementById('fSize').value = '';
+  applyFilter();
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ========== DETAIL ==========
+async function openDetail(clientId) {
+  currentClientId = clientId;
+  document.getElementById('detailOverlay').classList.add('open');
+  const c = allClients.find(x => x.id === clientId);
+  document.getElementById('detailTitle').textContent = c ? c.name : '';
+  document.getElementById('editClientBtn').onclick = () => openClientModal(clientId);
+  renderDetail(c);
+}
+
+function renderDetail(c) {
+  if (!c) return;
+  const ci = colorIdx(c.id);
+  const contacts = allContacts.filter(x => x.client_id === c.id);
+  const contactsHtml = contacts.length ? contacts.map((m,i) => {
+    const pref = m.preferred_contact;
+    const prefLabel = pref==='email'?'<span class="cm e"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> メール</span>':pref==='phone'?'<span class="cm p">📞 電話</span>':'<span class="cm l">💼 LinkedIn</span>';
+    const tags = (m.personality||[]).map(p=>`<span class="ptag">${esc(p)}</span>`).join('');
+    return `<div class="mc">
+      <div class="mc-head">
+        <div class="mc-av" style="background:${COLORS[(i+2)%COLORS.length]}">${esc((m.last_name||'')[0]||'?')}</div>
+        <div class="mc-info">
+          <div class="mc-name">${esc(m.last_name)} ${esc(m.first_name)} <span style="font-size:11px;font-weight:400;color:var(--text-muted)">${m.kana?'（'+esc(m.kana)+'）':''}</span></div>
+          <div class="mc-role">${esc(m.title||'')}</div>
+          ${m.department?`<div class="mc-dept">${esc(m.department)}</div>`:''}
+        </div>
+        <div>${prefLabel}</div>
+      </div>
+      <div class="mc-body">
+        <div class="mc-f"><label>直通電話</label><div class="v">${esc(m.tel||'—')}</div></div>
+        <div class="mc-f"><label>携帯番号</label><div class="v">${esc(m.mobile||'—')}</div></div>
+        <div class="mc-f"><label>メールアドレス</label><div class="v">${m.email?`<a href="mailto:${esc(m.email)}" class="li-a">${esc(m.email)}</a>`:'—'}</div></div>
+        <div class="mc-f"><label>LinkedIn</label><div class="v">${m.linkedin?`<a class="li-a" href="https://${esc(m.linkedin)}" target="_blank">${esc(m.linkedin)}</a>`:'—'}</div></div>
+        ${m.expert_criteria?`<div class="mc-f" style="grid-column:1/-1"><label>エキスパート選定基準</label><div class="crit">${esc(m.expert_criteria)}</div></div>`:''}
+        ${tags?`<div class="mc-f" style="grid-column:1/-1"><label>性格・雰囲気</label><div class="ptags">${tags}</div></div>`:''}
+        ${m.notes?`<div class="mc-f" style="grid-column:1/-1"><label>その他メモ</label><div class="crit">${esc(m.notes)}</div></div>`:''}
+      </div>
+      <div class="mc-actions">
+        <button class="btn btn-outline" onclick="openContactModal('${m.id}')">編集</button>
+        <button class="btn btn-danger" onclick="deleteContact('${m.id}')">削除</button>
+      </div>
+    </div>`;
+  }).join('') : '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px">コンタクトが登録されていません</div>';
+
+  document.getElementById('detailBody').innerHTML = `
+    <div class="cl-overview">
+      <div class="ov-head">
+        <div class="ov-av" style="background:${COLORS[ci]}">${getInitials(c.name)}</div>
+        <div style="flex:1">
+          <div class="ov-name">${esc(c.name)}</div>
+          <div class="ov-meta">
+            ${c.industry?`<span>🏭 ${esc(c.industry)}</span>`:''}
+            ${c.address?`<span>📍 ${esc(c.address)}</span>`:''}
+            ${c.listing?`<span><span class="lbadge ${lClass(c.listing)}" style="font-size:11px">${esc(c.listing)}</span></span>`:''}
+          </div>
+        </div>
+      </div>
+      <div class="ov-body">
+        <div class="ov-field"><label>企業規模</label><div class="v">${esc(c.employees||'—')}</div><div class="sv">${esc(c.revenue||'')}</div></div>
+        <div class="ov-field"><label>提案バッファ</label><div class="v">${c.budget_min||0}USD 〜 ${c.budget_max||0}USD</div></div>
+        <div class="ov-field"><label>本社所在地</label><div class="v">${c.zip?'〒'+esc(c.zip):''}</div><div class="sv">${esc(c.address||'—')}</div></div>
+        <div class="ov-field"><label>支社情報</label><div class="v">${esc(c.branches||'—')}</div></div>
+      </div>
+      ${c.overview?`<div class="ov-sec">クライアント概要・特徴</div><div class="ov-notes">${esc(c.overview)}</div>`:''}
+    </div>
+    <div class="sec-hd">
+      <div class="sec-title">コンタクト一覧</div>
+      <div class="sec-cnt">${contacts.length} 名</div>
+    </div>
+    <div class="mc-list">${contactsHtml}</div>`;
+}
+
+function closeDetail() {
+  document.getElementById('detailOverlay').classList.remove('open');
+  currentClientId = null;
+}
+
+// ========== CLIENT MODAL ==========
+function openClientModal(clientId=null) {
+  editingClientId = clientId;
+  const modal = document.getElementById('clientModal');
+  const fields = ['name','industry','listing','size','employees','revenue','bmin','bmax','zip','address','branches','overview'];
+  if (clientId) {
+    const c = allClients.find(x=>x.id===clientId);
+    document.getElementById('clientModalTitle').textContent = 'クライアント編集';
+    document.getElementById('saveClientBtn').textContent = '更新する';
+    if (c) {
+      document.getElementById('f_name').value = c.name||'';
+      document.getElementById('f_industry').value = c.industry||'';
+      document.getElementById('f_listing').value = c.listing||'';
+      document.getElementById('f_size').value = c.size||'';
+      document.getElementById('f_employees').value = c.employees||'';
+      document.getElementById('f_revenue').value = c.revenue||'';
+      document.getElementById('f_bmin').value = c.budget_min||'';
+      document.getElementById('f_bmax').value = c.budget_max||'';
+      document.getElementById('f_zip').value = c.zip||'';
+      document.getElementById('f_address').value = c.address||'';
+      document.getElementById('f_branches').value = c.branches||'';
+      document.getElementById('f_overview').value = c.overview||'';
+    }
+  } else {
+    document.getElementById('clientModalTitle').textContent = '新規クライアント登録';
+    document.getElementById('saveClientBtn').textContent = '登録する';
+    ['f_name','f_industry','f_employees','f_revenue','f_bmin','f_bmax','f_zip','f_address','f_branches','f_overview'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f_listing').value=''; document.getElementById('f_size').value='';
+  }
+  modal.classList.add('open');
+}
+
+function closeClientModal() { document.getElementById('clientModal').classList.remove('open'); editingClientId=null; }
+
+async function saveClient() {
+  const name = document.getElementById('f_name').value.trim();
+  if (!name) { showToast('クライアント名を入力してください', true); return; }
+  const btn = document.getElementById('saveClientBtn');
+  btn.disabled = true; btn.textContent = '保存中...';
+  const body = {
+    name, industry: document.getElementById('f_industry').value||null,
+    listing: document.getElementById('f_listing').value||null, size: document.getElementById('f_size').value||null,
+    employees: document.getElementById('f_employees').value||null, revenue: document.getElementById('f_revenue').value||null,
+    budget_min: parseInt(document.getElementById('f_bmin').value)||0, budget_max: parseInt(document.getElementById('f_bmax').value)||0,
+    zip: document.getElementById('f_zip').value||null, address: document.getElementById('f_address').value||null,
+    branches: document.getElementById('f_branches').value||null, overview: document.getElementById('f_overview').value||null
+  };
+  try {
+    if (editingClientId) {
+      await sb(`crm_clients?id=eq.${editingClientId}`, { method:'PATCH', body });
+      const idx = allClients.findIndex(x=>x.id===editingClientId);
+      if (idx>=0) allClients[idx] = {...allClients[idx], ...body};
+      showToast('クライアントを更新しました');
+      if (currentClientId === editingClientId) renderDetail(allClients[idx]);
+    } else {
+      const res = await sb('crm_clients', { method:'POST', body });
+      if (res && res[0]) allClients.push(res[0]);
+      showToast('クライアントを登録しました');
+    }
+    closeClientModal(); updateStats(); renderTable(allClients);
+  } catch(e) { showToast('エラー: ' + e.message, true); }
+  finally { btn.disabled=false; btn.textContent = editingClientId?'更新する':'登録する'; }
+}
+
+// ========== CONTACT MODAL ==========
+function openContactModal(contactId=null) {
+  editingContactId = contactId;
+  const modal = document.getElementById('contactModal');
+  if (contactId) {
+    const m = allContacts.find(x=>x.id===contactId);
+    document.getElementById('contactModalTitle').textContent = 'コンタクト編集';
+    document.getElementById('saveContactBtn').textContent = '更新する';
+    if (m) {
+      document.getElementById('cf_last').value = m.last_name||'';
+      document.getElementById('cf_first').value = m.first_name||'';
+      document.getElementById('cf_kana').value = m.kana||'';
+      document.getElementById('cf_title').value = m.title||'';
+      document.getElementById('cf_dept').value = m.department||'';
+      document.getElementById('cf_tel').value = m.tel||'';
+      document.getElementById('cf_mobile').value = m.mobile||'';
+      document.getElementById('cf_email').value = m.email||'';
+      document.getElementById('cf_linkedin').value = m.linkedin||'';
+      document.getElementById('cf_preferred').value = m.preferred_contact||'';
+      document.getElementById('cf_criteria').value = m.expert_criteria||'';
+      document.getElementById('cf_personality').value = (m.personality||[]).join(', ');
+      document.getElementById('cf_notes').value = m.notes||'';
+    }
+  } else {
+    document.getElementById('contactModalTitle').textContent = 'コンタクト追加';
+    document.getElementById('saveContactBtn').textContent = '登録する';
+    ['cf_last','cf_first','cf_kana','cf_title','cf_dept','cf_tel','cf_mobile','cf_email','cf_linkedin','cf_criteria','cf_personality','cf_notes'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('cf_preferred').value='';
+  }
+  modal.classList.add('open');
+}
+
+function closeContactModal() { document.getElementById('contactModal').classList.remove('open'); editingContactId=null; }
+
+async function saveContact() {
+  const last = document.getElementById('cf_last').value.trim();
+  const first = document.getElementById('cf_first').value.trim();
+  if (!last||!first) { showToast('氏名を入力してください', true); return; }
+  const btn = document.getElementById('saveContactBtn');
+  btn.disabled=true; btn.textContent='保存中...';
+  const personality = document.getElementById('cf_personality').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const body = {
+    last_name: last, first_name: first,
+    kana: document.getElementById('cf_kana').value||null,
+    title: document.getElementById('cf_title').value||null,
+    department: document.getElementById('cf_dept').value||null,
+    tel: document.getElementById('cf_tel').value||null,
+    mobile: document.getElementById('cf_mobile').value||null,
+    email: document.getElementById('cf_email').value||null,
+    linkedin: document.getElementById('cf_linkedin').value||null,
+    preferred_contact: document.getElementById('cf_preferred').value||null,
+    expert_criteria: document.getElementById('cf_criteria').value||null,
+    personality: personality.length ? personality : null,
+    notes: document.getElementById('cf_notes').value||null
+  };
+  try {
+    if (editingContactId) {
+      await sb(`crm_contacts?id=eq.${editingContactId}`, { method:'PATCH', body });
+      const idx = allContacts.findIndex(x=>x.id===editingContactId);
+      if (idx>=0) allContacts[idx] = {...allContacts[idx], ...body};
+      showToast('コンタクトを更新しました');
+    } else {
+      body.client_id = currentClientId;
+      const res = await sb('crm_contacts', { method:'POST', body });
+      if (res && res[0]) allContacts.push(res[0]);
+      showToast('コンタクトを登録しました');
+    }
+    closeContactModal();
+    updateStats(); updateSidebarBadges();
+    const c = allClients.find(x=>x.id===currentClientId);
+    if (c) renderDetail(c);
+    renderTable(allClients);
+  } catch(e) { showToast('エラー: ' + e.message, true); }
+  finally { btn.disabled=false; btn.textContent=editingContactId?'更新する':'登録する'; }
+}
+
+async function deleteContact(contactId) {
+  if (!confirm('このコンタクトを削除しますか？')) return;
+  try {
+    await sb(`crm_contacts?id=eq.${contactId}`, { method:'DELETE', prefer:'return=minimal' });
+    allContacts = allContacts.filter(x=>x.id!==contactId);
+    showToast('コンタクトを削除しました');
+    updateStats(); updateSidebarBadges();
+    const c = allClients.find(x=>x.id===currentClientId);
+    if (c) renderDetail(c);
+    renderTable(allClients);
+  } catch(e) { showToast('エラー: ' + e.message, true); }
+}
+
+// ========== CSV ==========
+function openCsvModal() { document.getElementById('csvModal').classList.add('open'); }
+
+function handleCsvFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const text = ev.target.result;
+    const lines = text.trim().split('\n').map(l=>l.split(',').map(s=>s.trim().replace(/^"|"$/g,'')));
+    const headers = lines[0].map(h=>h.toLowerCase());
+    csvRows = lines.slice(1).filter(r=>r.length>1 && r[0]).map(r=>{
+      const obj={};
+      headers.forEach((h,i)=>obj[h]=r[i]||'');
+      return obj;
+    });
+    const preview = document.getElementById('csvPreview');
+    preview.innerHTML = `<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">${csvRows.length} 件のデータを検出しました</div>
+      <div style="overflow-x:auto;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--rs)">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead><tr>${headers.map(h=>`<th style="padding:6px 8px;background:var(--surface2);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap">${esc(h)}</th>`).join('')}</tr></thead>
+          <tbody>${csvRows.slice(0,5).map(r=>`<tr>${headers.map(h=>`<td style="padding:5px 8px;border-bottom:1px solid var(--border-light)">${esc(r[h]||'')}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table>
+      </div>`;
+    document.getElementById('csvImportBtn').style.display='inline-flex';
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+async function importCsv() {
+  if (!csvRows.length) return;
+  const btn = document.getElementById('csvImportBtn');
+  btn.disabled=true; btn.textContent='インポート中...';
+  let ok=0, ng=0;
+  for (const r of csvRows) {
+    try {
+      const body = {
+        name: r.name||r['クライアント名']||'',
+        industry: r.industry||r['業界']||null,
+        listing: r.listing||r['上場区分']||null,
+        size: r.size||r['企業規模']||null,
+        employees: r.employees||r['従業員数']||null,
+        revenue: r.revenue||r['売上']||null,
+        budget_min: parseInt(r.budget_min||r['バッファ下限'])||0,
+        budget_max: parseInt(r.budget_max||r['バッファ上限'])||0,
+        zip: r.zip||r['郵便番号']||null,
+        address: r.address||r['住所']||null,
+        branches: r.branches||r['支社']||null,
+        overview: r.overview||r['概要']||null
+      };
+      if (!body.name) { ng++; continue; }
+      await sb('crm_clients', { method:'POST', body });
+      ok++;
+    } catch { ng++; }
+  }
+  showToast(`インポート完了: ${ok}件成功${ng?`, ${ng}件失敗`:''}`, ng>0);
+  document.getElementById('csvModal').classList.remove('open');
+  csvRows=[];
+  await loadAll();
+  btn.disabled=false; btn.textContent='インポート実行';
+}
+
+function exportCsv() {
+  const headers = ['id','name','industry','listing','size','employees','revenue','budget_min','budget_max','zip','address','branches','overview'];
+  const rows = allClients.map(c => headers.map(h => `"${String(c[h]||'').replace(/"/g,'""')}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download = `crm_clients_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  showToast('CSVエクスポート完了');
+}
+
+// ========== TOAST ==========
+let toastTimer;
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = isError ? 'var(--red)' : '#1A1F2E';
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+// ========== INIT ==========
+loadAll();
+</script>
+</body>
+</html>
